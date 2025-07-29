@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Host</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .players-list {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .player-item {
+            background: white;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .actions-panel {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Game Host Panel</h1>
+        
+        <div id="status" class="status">Connecting...</div>
+        
+        <div id="connect-section">
+            <button onclick="connectAsHost()">Connect as Host</button>
+        </div>
+
+        <div id="host-panel" style="display: none;">
+            <div class="players-list">
+                <h3>Connected Players</h3>
+                <div id="players-container">
+                    <p>No players connected yet.</p>
+                </div>
+            </div>
+
+            <div class="actions-panel">
+                <h3>Send Message to Players</h3>
+                <input type="text" id="messageInput" placeholder="Enter message">
+                <button onclick="sendMessage()">Send Message</button>
+            </div>
+
+            <div>
+                <h3>Player Actions Log</h3>
+                <div id="actionLog" class="log"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let isHost = false;
+
+        function updateStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function connectAsHost() {
+            socket.emit('join-as-host');
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (message) {
+                socket.emit('host-message', message);
+                addToLog(`Sent to players: ${message}`);
+                input.value = '';
+            }
+        }
+
+        function addToLog(message) {
+            const log = document.getElementById('actionLog');
+            const timestamp = new Date().toLocaleTimeString();
+            log.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function updatePlayersDisplay(players) {
+            const container = document.getElementById('players-container');
+            const playerCount = Object.keys(players).length;
+            
+            if (playerCount === 0) {
+                container.innerHTML = '<p>No players connected yet.</p>';
+            } else {
+                container.innerHTML = Object.values(players).map(player => 
+                    `<div class="player-item">
+                        <strong>${player.name}</strong> (ID: ${player.id.substring(0, 8)}...)
+                    </div>`
+                ).join('');
+            }
+        }
+
+        // Socket event listeners
+        socket.on('role-assigned', (data) => {
+            if (data.role === 'host' && data.success) {
+                isHost = true;
+                updateStatus('Successfully connected as Host!');
+                document.getElementById('connect-section').style.display = 'none';
+                document.getElementById('host-panel').style.display = 'block';
+                addToLog('Host panel activated');
+            } else if (data.role === 'host' && !data.success) {
+                updateStatus(data.message || 'Failed to connect as host', 'error');
+            }
+        });
+
+        socket.on('player-joined', (player) => {
+            addToLog(`Player joined: ${player.name}`);
+        });
+
+        socket.on('player-left', (data) => {
+            addToLog(`Player left: ${data.playerName}`);
+        });
+
+        socket.on('game-state-update', (state) => {
+            updatePlayersDisplay(state.players);
+        });
+
+        socket.on('player-action', (data) => {
+            addToLog(`${data.playerName} performed action: ${JSON.stringify(data.action)}`);
+        });
+
+        socket.on('connect', () => {
+            updateStatus('Connected to server. Click "Connect as Host" to begin.');
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus('Disconnected from server', 'error');
+        });
+    </script>
+</body>
+</html>

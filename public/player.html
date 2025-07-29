@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #e3f2fd;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background-color: #d4edda; color: #155724; }
+        .status.error { background-color: #f8d7da; color: #721c24; }
+        .join-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .game-area {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 10px 0;
+            min-height: 200px;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #218838; }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover { background-color: #545b62; }
+        input[type="text"] {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        .messages {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            min-height: 50px;
+        }
+        .message-item {
+            background: white;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+            border-left: 3px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Game Player</h1>
+        
+        <div id="status" class="status">Connecting...</div>
+        
+        <div id="join-section" class="join-section">
+            <h3>Join Game</h3>
+            <input type="text" id="playerNameInput" placeholder="Enter your name" value="Player1">
+            <button onclick="joinAsPlayer()">Join Game</button>
+        </div>
+
+        <div id="player-panel" style="display: none;">
+            <div id="player-info">
+                <h3>Welcome, <span id="playerName"></span>!</h3>
+            </div>
+
+            <div class="game-area">
+                <h3>Game Actions</h3>
+                <p>Click buttons below to send actions to the host:</p>
+                <div class="actions">
+                    <button onclick="sendAction('click', 'red')">Click Red</button>
+                    <button onclick="sendAction('click', 'blue')" class="secondary">Click Blue</button>
+                    <button onclick="sendAction('move', 'left')">Move Left</button>
+                    <button onclick="sendAction('move', 'right')">Move Right</button>
+                </div>
+                
+                <div>
+                    <input type="text" id="customActionInput" placeholder="Custom action">
+                    <button onclick="sendCustomAction()">Send Custom</button>
+                </div>
+            </div>
+
+            <div class="messages">
+                <h3>Messages from Host</h3>
+                <div id="messagesContainer">
+                    <p>No messages yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let isPlayer = false;
+        let playerData = null;
+
+        function updateStatus(message, type = 'success') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function joinAsPlayer() {
+            const nameInput = document.getElementById('playerNameInput');
+            const playerName = nameInput.value.trim() || 'Anonymous Player';
+            socket.emit('join-as-player', playerName);
+        }
+
+        function sendAction(actionType, value) {
+            if (!isPlayer) return;
+            
+            const action = {
+                type: actionType,
+                value: value,
+                timestamp: Date.now()
+            };
+            
+            socket.emit('player-action', action);
+            console.log('Sent action:', action);
+        }
+
+        function sendCustomAction() {
+            const input = document.getElementById('customActionInput');
+            const customValue = input.value.trim();
+            
+            if (customValue) {
+                sendAction('custom', customValue);
+                input.value = '';
+            }
+        }
+
+        function addMessage(message) {
+            const container = document.getElementById('messagesContainer');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            if (container.innerHTML.includes('No messages yet.')) {
+                container.innerHTML = '';
+            }
+            
+            container.innerHTML += `
+                <div class="message-item">
+                    <strong>[${timestamp}]</strong> ${message}
+                </div>
+            `;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Socket event listeners
+        socket.on('role-assigned', (data) => {
+            if (data.role === 'player' && data.success) {
+                isPlayer = true;
+                playerData = data.playerData;
+                updateStatus('Successfully joined the game!');
+                document.getElementById('join-section').style.display = 'none';
+                document.getElementById('player-panel').style.display = 'block';
+                document.getElementById('playerName').textContent = playerData.name;
+            } else if (data.role === 'player' && !data.success) {
+                updateStatus(data.message || 'Failed to join game', 'error');
+            }
+        });
+
+        socket.on('host-message', (message) => {
+            addMessage(message);
+        });
+
+        socket.on('host-disconnected', () => {
+            updateStatus('Host has disconnected', 'error');
+            addMessage('The host has left the game.');
+        });
+
+        socket.on('connect', () => {
+            updateStatus('Connected to server. Enter your name and join!');
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus('Disconnected from server', 'error');
+        });
+
+        // Allow Enter key to join game
+        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                joinAsPlayer();
+            }
+        });
+
+        // Allow Enter key for custom actions
+        document.getElementById('customActionInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendCustomAction();
+            }
+        });
+    </script>
+</body>
+</html>
