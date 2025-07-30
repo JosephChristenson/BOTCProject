@@ -1,17 +1,23 @@
 {
-  "name": "botc-application",
+  "name": "Blood-On-The-Clocktower-Project",
   "version": "1.0.0",
+  "description": "A Blood on the Clocktower Grimiore",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "express": "^5.1.0",
-    "socket.io": "^4.8.1"
-  }
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["multiplayer", "game", "websocket", "socket.io"],
+  "author": "Joseph Christenson",
+  "license": "MIT"
 }
