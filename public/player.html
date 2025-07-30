@@ -7,119 +7,240 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #e3f2fd;
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            min-height: 100vh;
         }
         .container {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
         .status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 8px;
             font-weight: bold;
         }
-        .status.success { background-color: #d4edda; color: #155724; }
-        .status.error { background-color: #f8d7da; color: #721c24; }
-        .join-section {
-            background-color: #f8f9fa;
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .game-header {
+            background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .room-info {
+            background: #e7f3ff;
             padding: 15px;
-            border-radius: 5px;
-            margin: 10px 0;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #007bff;
+        }
+        .player-info {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
         }
         .game-area {
-            background-color: #f0f8ff;
-            padding: 20px;
-            border-radius: 5px;
-            margin: 10px 0;
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
             min-height: 200px;
         }
         .actions {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 15px 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
         }
-        button {
-            background-color: #28a745;
+        .action-btn {
+            background: #28a745;
             color: white;
             border: none;
-            padding: 15px 25px;
-            border-radius: 5px;
+            padding: 15px 10px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            text-align: center;
         }
-        button:hover { background-color: #218838; }
-        button.secondary {
-            background-color: #6c757d;
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        button.secondary:hover { background-color: #545b62; }
-        input[type="text"] {
+        .action-btn.blue { background: #007bff; }
+        .action-btn.blue:hover { background: #0056b3; }
+        .action-btn.orange { background: #fd7e14; }
+        .action-btn.orange:hover { background: #e8650f; }
+        .action-btn.purple { background: #6f42c1; }
+        .action-btn.purple:hover { background: #5a2d91; }
+        .action-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .custom-action {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        .custom-action input {
+            flex: 1;
             padding: 10px;
             border: 1px solid #ddd;
-            border-radius: 4px;
-            margin: 5px;
-            font-size: 16px;
-        }
-        .messages {
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
             border-radius: 5px;
-            padding: 10px;
-            margin: 10px 0;
-            min-height: 50px;
+            font-size: 14px;
+        }
+        .custom-action button {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .custom-action button:hover { background: #545b62; }
+        .messages-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 200px;
+            overflow-y: auto;
         }
         .message-item {
             background: white;
-            padding: 8px;
-            margin: 5px 0;
-            border-radius: 3px;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 5px;
             border-left: 3px solid #ffc107;
+        }
+        .message-timestamp {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .waiting-screen {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .waiting-screen h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .game-status {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .game-status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .player-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .player-list h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .player-list p {
+            margin: 5px 0;
+            color: #666;
+            font-size: 14px;
+        }
+        @media (max-width: 600px) {
+            .actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .custom-action {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Game Player</h1>
+        <div id="status" class="status info">Loading...</div>
         
-        <div id="status" class="status">Connecting...</div>
-        
-        <div id="join-section" class="join-section">
-            <h3>Join Game</h3>
-            <input type="text" id="playerNameInput" placeholder="Enter your name" value="Player1">
-            <button onclick="joinAsPlayer()">Join Game</button>
+        <!-- Waiting Screen -->
+        <div id="waiting-screen" class="waiting-screen">
+            <h2>🎮 Joining Game...</h2>
+            <p>Please wait while we connect you to the game.</p>
         </div>
 
+        <!-- Game Interface -->
         <div id="player-panel" style="display: none;">
-            <div id="player-info">
-                <h3>Welcome, <span id="playerName"></span>!</h3>
+            <div class="game-header">
+                <h1>🎯 <span id="gameName">Game</span></h1>
+                <p>Player: <strong><span id="playerName"></span></strong></p>
+            </div>
+            
+            <div class="room-info">
+                <h4>📍 Room Information</h4>
+                <p><strong>Room Code:</strong> <span id="roomCode" style="font-family: monospace; font-weight: bold;"></span></p>
+                <p><strong>Host:</strong> <span id="hostName"></span></p>
+                <p><strong>Players:</strong> <span id="playerCount">1</span> / <span id="maxPlayers">4</span></p>
             </div>
 
-            <div class="game-area">
-                <h3>Game Actions</h3>
+            <div class="game-status" id="gameStatus">
+                Waiting for host to start the game...
+            </div>
+
+            <div id="game-area" class="game-area">
+                <h3>🎮 Game Actions</h3>
                 <p>Click buttons below to send actions to the host:</p>
+                
                 <div class="actions">
-                    <button onclick="sendAction('click', 'red')">Click Red</button>
-                    <button onclick="sendAction('click', 'blue')" class="secondary">Click Blue</button>
-                    <button onclick="sendAction('move', 'left')">Move Left</button>
-                    <button onclick="sendAction('move', 'right')">Move Right</button>
+                    <button class="action-btn" onclick="sendAction('click', 'red')">
+                        🔴 Click Red
+                    </button>
+                    <button class="action-btn blue" onclick="sendAction('click', 'blue')">
+                        🔵 Click Blue
+                    </button>
+                    <button class="action-btn orange" onclick="sendAction('move', 'left')">
+                        ⬅️ Move Left
+                    </button>
+                    <button class="action-btn orange" onclick="sendAction('move', 'right')">
+                        ➡️ Move Right
+                    </button>
+                    <button class="action-btn purple" onclick="sendAction('jump', null)">
+                        ⬆️ Jump
+                    </button>
+                    <button class="action-btn purple" onclick="sendAction('spin', null)">
+                        🌀 Spin
+                    </button>
                 </div>
                 
-                <div>
-                    <input type="text" id="customActionInput" placeholder="Custom action">
-                    <button onclick="sendCustomAction()">Send Custom</button>
+                <div class="custom-action">
+                    <input type="text" id="customActionInput" placeholder="Type custom action..." maxlength="50">
+                    <button onclick="sendCustomAction()">Send</button>
                 </div>
             </div>
 
-            <div class="messages">
-                <h3>Messages from Host</h3>
+            <div class="messages-section">
+                <h3>💬 Messages from Host</h3>
                 <div id="messagesContainer">
-                    <p>No messages yet.</p>
+                    <p style="color: #666; font-style: italic;">No messages yet. The host will send updates here.</p>
                 </div>
             </div>
         </div>
@@ -128,23 +249,44 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let isPlayer = false;
+        let currentRoom = null;
         let playerData = null;
+        let gameData = null;
 
-        function updateStatus(message, type = 'success') {
+        // Get room code from URL parameters
+        function getRoomCodeFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('room');
+        }
+
+        function updateStatus(message, type = 'info') {
             const statusEl = document.getElementById('status');
             statusEl.textContent = message;
             statusEl.className = `status ${type}`;
         }
 
-        function joinAsPlayer() {
-            const nameInput = document.getElementById('playerNameInput');
-            const playerName = nameInput.value.trim() || 'Anonymous Player';
-            socket.emit('join-as-player', playerName);
+        function initializePlayerPanel(joinData) {
+            currentRoom = joinData.roomCode;
+            playerData = joinData.playerData;
+            gameData = joinData.gameData;
+
+            // Update display elements
+            document.getElementById('gameName').textContent = gameData.gameName;
+            document.getElementById('playerName').textContent = playerData.name;
+            document.getElementById('roomCode').textContent = joinData.roomCode;
+            document.getElementById('hostName').textContent = gameData.hostName;
+            document.getElementById('playerCount').textContent = gameData.playerCount;
+            document.getElementById('maxPlayers').textContent = gameData.maxPlayers;
+
+            // Show player panel, hide waiting screen
+            document.getElementById('waiting-screen').style.display = 'none';
+            document.getElementById('player-panel').style.display = 'block';
+
+            updateStatus(`Welcome to ${gameData.gameName}!`, 'success');
         }
 
         function sendAction(actionType, value) {
-            if (!isPlayer) return;
+            if (!currentRoom) return;
             
             const action = {
                 type: actionType,
@@ -153,7 +295,16 @@
             };
             
             socket.emit('player-action', action);
-            console.log('Sent action:', action);
+            
+            // Visual feedback
+            const actionText = value ? `${actionType}: ${value}` : actionType;
+            console.log('Action sent:', actionText);
+            
+            // Brief visual feedback on the button
+            event.target.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                event.target.style.transform = '';
+            }, 100);
         }
 
         function sendCustomAction() {
@@ -166,66 +317,111 @@
             }
         }
 
-        function addMessage(message) {
+        function addMessage(messageData) {
             const container = document.getElementById('messagesContainer');
-            const timestamp = new Date().toLocaleTimeString();
+            const timestamp = new Date(messageData.timestamp || Date.now()).toLocaleTimeString();
             
-            if (container.innerHTML.includes('No messages yet.')) {
+            // Remove "no messages" text if it exists
+            if (container.innerHTML.includes('No messages yet')) {
                 container.innerHTML = '';
             }
             
-            container.innerHTML += `
-                <div class="message-item">
-                    <strong>[${timestamp}]</strong> ${message}
-                </div>
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message-item';
+            messageEl.innerHTML = `
+                <div class="message-timestamp">${timestamp}</div>
+                <div>${messageData.message}</div>
             `;
+            
+            container.appendChild(messageEl);
             container.scrollTop = container.scrollHeight;
         }
 
-        // Socket event listeners
-        socket.on('role-assigned', (data) => {
-            if (data.role === 'player' && data.success) {
-                isPlayer = true;
-                playerData = data.playerData;
-                updateStatus('Successfully joined the game!');
-                document.getElementById('join-section').style.display = 'none';
-                document.getElementById('player-panel').style.display = 'block';
-                document.getElementById('playerName').textContent = playerData.name;
-            } else if (data.role === 'player' && !data.success) {
-                updateStatus(data.message || 'Failed to join game', 'error');
+        function updateGameStatus(status, type = '') {
+            const statusEl = document.getElementById('gameStatus');
+            statusEl.textContent = status;
+            statusEl.className = `game-status ${type}`;
+        }
+
+        function updateRoomInfo(data) {
+            if (data.playerCount !== undefined) {
+                document.getElementById('playerCount').textContent = data.playerCount;
             }
-        });
+        }
 
-        socket.on('host-message', (message) => {
-            addMessage(message);
-        });
-
-        socket.on('host-disconnected', () => {
-            updateStatus('Host has disconnected', 'error');
-            addMessage('The host has left the game.');
-        });
-
+        // Socket event listeners
         socket.on('connect', () => {
-            updateStatus('Connected to server. Enter your name and join!');
+            const roomCode = getRoomCodeFromURL();
+            if (roomCode) {
+                // Auto-join with a default name, or redirect to lobby for name input
+                const playerName = sessionStorage.getItem('playerName') || prompt('Enter your name:') || 'Anonymous Player';
+                sessionStorage.setItem('playerName', playerName);
+                
+                socket.emit('join-game', {
+                    roomCode: roomCode,
+                    playerName: playerName
+                });
+            } else {
+                // Redirect to lobby if no room code
+                window.location.href = '/lobby.html';
+            }
         });
 
         socket.on('disconnect', () => {
             updateStatus('Disconnected from server', 'error');
         });
 
-        // Allow Enter key to join game
-        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                joinAsPlayer();
+        socket.on('join-result', (data) => {
+            if (data.success) {
+                initializePlayerPanel(data);
+            } else {
+                updateStatus(`Failed to join: ${data.message}`, 'error');
+                setTimeout(() => {
+                    window.location.href = '/lobby.html';
+                }, 3000);
             }
         });
 
-        // Allow Enter key for custom actions
-        document.getElementById('customActionInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendCustomAction();
+        socket.on('host-message', (messageData) => {
+            addMessage(messageData);
+        });
+
+        socket.on('room-update', (data) => {
+            updateRoomInfo(data);
+        });
+
+        socket.on('game-started', () => {
+            updateGameStatus('🎮 Game Started! Have fun!', 'active');
+            updateStatus('Game has started!', 'success');
+        });
+
+        socket.on('host-disconnected', () => {
+            updateStatus('Host has disconnected from the game', 'error');
+            updateGameStatus('❌ Host Disconnected - Game Ended');
+            addMessage({
+                message: 'The host has left the game. You will be redirected to the lobby.',
+                timestamp: Date.now()
+            });
+            
+            setTimeout(() => {
+                window.location.href = '/lobby.html';
+            }, 3000);
+        });
+
+        // Handle Enter key for custom actions
+        document.addEventListener('DOMContentLoaded', () => {
+            const customInput = document.getElementById('customActionInput');
+            if (customInput) {
+                customInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        sendCustomAction();
+                    }
+                });
             }
         });
+
+        // Initialize
+        updateStatus('Connecting to game...', 'info');
     </script>
 </body>
 </html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Lobby</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .action-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            flex: 1;
+            min-width: 300px;
+            border: 2px solid transparent;
+        }
+        .action-card.active {
+            border-color: #007bff;
+            background: #e7f3ff;
+        }
+        .action-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin: 15px 0;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn.success { background: #28a745; }
+        .btn.success:hover { background: #1e7e34; }
+        .btn.secondary { background: #6c757d; }
+        .btn.secondary:hover { background: #545b62; }
+        .games-list {
+            margin-top: 30px;
+        }
+        .game-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+        .game-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .game-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .game-info p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .game-stats {
+            text-align: right;
+            color: #666;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: underline;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+        .hidden { display: none; }
+        .room-code {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        @media (max-width: 768px) {
+            .actions {
+                flex-direction: column;
+            }
+            .action-card {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Game Lobby</h1>
+            <p>Create a new game or join an existing one</p>
+        </div>
+
+        <div id="status" class="status info">Connecting to server...</div>
+
+        <!-- Main Actions -->
+        <div class="actions">
+            <!-- Create Game Card -->
+            <div class="action-card" id="create-card">
+                <h3>🎯 Create New Game</h3>
+                <div class="form-group">
+                    <label for="hostName">Your Name:</label>
+                    <input type="text" id="hostName" placeholder="Enter your name" value="Host Player">
+                </div>
+                <div class="form-group">
+                    <label for="gameName">Game Name:</label>
+                    <input type="text" id="gameName" placeholder="My Awesome Game" value="Quick Game">
+                </div>
+                <div class="form-group">
+                    <label for="maxPlayers">Max Players:</label>
+                    <select id="maxPlayers">
+                        <option value="2">2 Players</option>
+                        <option value="4" selected>4 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="8">8 Players</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="isPublic" checked> 
+                        Make game public (visible in lobby)
+                    </label>
+                </div>
+                <button class="btn success" onclick="createGame()">Create Game</button>
+            </div>
+
+            <!-- Join Game Card -->
+            <div class="action-card" id="join-card">
+                <h3>🎮 Join Game</h3>
+                <div class="form-group">
+                    <label for="playerName">Your Name:</label>
+                    <input type="text" id="playerName" placeholder="Enter your name" value="Player 1">
+                </div>
+                <div class="form-group">
+                    <label for="joinRoomCode">Room Code:</label>
+                    <input type="text" id="joinRoomCode" placeholder="Enter room code" style="text-transform: uppercase;">
+                </div>
+                <button class="btn" onclick="joinGameByCode()">Join by Code</button>
+                <button class="toggle-btn" onclick="toggleGamesList()">Or browse available games ↓</button>
+            </div>
+        </div>
+
+        <!-- Available Games List -->
+        <div class="games-list" id="games-list">
+            <h3>Available Games</h3>
+            <div id="games-container">
+                <p>Loading games...</p>
+            </div>
+            <button class="btn secondary" onclick="refreshGamesList()">🔄 Refresh List</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let gamesList = [];
+
+        function updateStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        function createGame() {
+            const hostName = document.getElementById('hostName').value.trim();
+            const gameName = document.getElementById('gameName').value.trim();
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const isPublic = document.getElementById('isPublic').checked;
+
+            if (!hostName || !gameName) {
+                updateStatus('Please fill in all fields', 'error');
+                return;
+            }
+
+            socket.emit('create-game', {
+                hostName: hostName,
+                gameName: gameName,
+                maxPlayers: maxPlayers,
+                isPublic: isPublic
+            });
+        }
+
+        function joinGameByCode() {
+            const playerName = document.getElementById('playerName').value.trim();
+            const roomCode = document.getElementById('joinRoomCode').value.trim().toUpperCase();
+
+            if (!playerName || !roomCode) {
+                updateStatus('Please enter your name and room code', 'error');
+                return;
+            }
+
+            joinGame(roomCode, playerName);
+        }
+
+        function joinGame(roomCode, playerName) {
+            if (!playerName) {
+                playerName = document.getElementById('playerName').value.trim();
+            }
+            
+            if (!playerName) {
+                updateStatus('Please enter your name first', 'error');
+                return;
+            }
+
+            socket.emit('join-game', {
+                roomCode: roomCode,
+                playerName: playerName
+            });
+        }
+
+        function toggleGamesList() {
+            const gamesList = document.getElementById('games-list');
+            gamesList.classList.toggle('hidden');
+            if (!gamesList.classList.contains('hidden')) {
+                refreshGamesList();
+            }
+        }
+
+        function refreshGamesList() {
+            socket.emit('get-game-list');
+        }
+
+        function updateGamesList(games) {
+            const container = document.getElementById('games-container');
+            gamesList = games;
+
+            if (games.length === 0) {
+                container.innerHTML = '<p>No public games available. Create one to get started!</p>';
+                return;
+            }
+
+            container.innerHTML = games.map(game => `
+                <div class="game-item">
+                    <div class="game-info">
+                        <h4>${game.gameName}</h4>
+                        <p>Host: ${game.hostName} • Code: <span class="room-code">${game.roomCode}</span></p>
+                        <p>Created: ${new Date(game.createdAt).toLocaleTimeString()}</p>
+                    </div>
+                    <div class="game-stats">
+                        <p>${game.playerCount}/${game.maxPlayers} players</p>
+                        <button class="btn" onclick="joinGame('${game.roomCode}')">Join Game</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Socket event listeners
+        socket.on('connect', () => {
+            updateStatus('Connected! Ready to create or join games.', 'success');
+            refreshGamesList();
+        });
+
+        socket.on('disconnect', () => {
+            updateStatus('Disconnected from server', 'error');
+        });
+
+        socket.on('game-created', (data) => {
+            if (data.success) {
+                updateStatus(`Game created! Room code: ${data.roomCode}`, 'success');
+                // Redirect to host interface with room code
+                window.location.href = `/host.html?room=${data.roomCode}`;
+            } else {
+                updateStatus('Failed to create game: ' + (data.message || 'Unknown error'), 'error');
+            }
+        });
+
+        socket.on('join-result', (data) => {
+            if (data.success) {
+                updateStatus(`Joined ${data.gameData.gameName}!`, 'success');
+                // Redirect to player interface with room code
+                window.location.href = `/player.html?room=${data.roomCode}`;
+            } else {
+                updateStatus('Failed to join game: ' + data.message, 'error');
+            }
+        });
+
+        socket.on('game-list-update', (games) => {
+            updateGamesList(games);
+        });
+
+        // Auto-refresh games list every 10 seconds
+        setInterval(() => {
+            if (!document.getElementById('games-list').classList.contains('hidden')) {
+                refreshGamesList();
+            }
+        }, 10000);
+
+        // Auto-uppercase room code input
+        document.getElementById('joinRoomCode').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body>
+</html>

@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -9,92 +10,227 @@ const io = socketIo(server);
 // Serve static files
 app.use(express.static('public'));
 
-// Simple game state
-let gameState = {
-  host: null,
-  players: {},
-  isGameActive: false
-};
+// Game rooms storage
+let gameRooms = {};
+
+// Helper function to generate room codes
+function generateRoomCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+// Helper function to get room info for lobby list
+function getPublicRoomsList() {
+  return Object.values(gameRooms)
+    .filter(room => room.isPublic && !room.gameStarted)
+    .map(room => ({
+      roomCode: room.roomCode,
+      gameName: room.gameName,
+      hostName: room.hostName,
+      playerCount: Object.keys(room.players).length,
+      maxPlayers: room.maxPlayers,
+      createdAt: room.createdAt
+    }));
+}
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  // Handle joining as host
-  socket.on('join-as-host', () => {
-    if (gameState.host === null) {
-      gameState.host = socket.id;
-      socket.join('host');
-      socket.emit('role-assigned', { role: 'host', success: true });
-      console.log('Host assigned:', socket.id);
-    } else {
-      socket.emit('role-assigned', { role: 'host', success: false, message: 'Host already exists' });
-    }
+  // Get list of available games
+  socket.on('get-game-list', () => {
+    socket.emit('game-list-update', getPublicRoomsList());
   });
 
-  // Handle joining as player
-  socket.on('join-as-player', (playerName) => {
-    const playerId = socket.id;
-    gameState.players[playerId] = {
-      name: playerName || `Player ${Object.keys(gameState.players).length + 1}`,
-      id: playerId
+  // Create a new game room
+  socket.on('create-game', (gameData) => {
+    const roomCode = generateRoomCode();
+    const room = {
+      roomCode: roomCode,
+      gameName: gameData.gameName || 'Untitled Game',
+      hostName: gameData.hostName || 'Anonymous Host',
+      hostId: socket.id,
+      players: {},
+      maxPlayers: gameData.maxPlayers || 6,
+      isPublic: gameData.isPublic !== false,
+      gameStarted: false,
+      createdAt: new Date()
     };
-    
-    socket.join('players');
-    socket.emit('role-assigned', { 
-      role: 'player', 
-      success: true, 
-      playerData: gameState.players[playerId] 
+
+    gameRooms[roomCode] = room;
+    socket.join(roomCode);
+    socket.join(`${roomCode}-host`);
+
+    socket.emit('game-created', {
+      success: true,
+      roomCode: roomCode,
+      gameData: room
     });
 
-    // Notify host about new player
-    if (gameState.host) {
-      io.to(gameState.host).emit('player-joined', gameState.players[playerId]);
-      io.to(gameState.host).emit('game-state-update', { players: gameState.players });
+    // Broadcast updated game list to lobby
+    io.emit('game-list-update', getPublicRoomsList());
+    console.log(`Game created: ${room.gameName} (${roomCode}) by ${room.hostName}`);
+  });
+
+  // Join an existing game
+  socket.on('join-game', (joinData) => {
+    const { roomCode, playerName } = joinData;
+    const room = gameRooms[roomCode];
+
+    if (!room) {
+      socket.emit('join-result', {
+        success: false,
+        message: 'Game not found. Please check the room code.'
+      });
+      return;
     }
 
-    console.log('Player joined:', gameState.players[playerId]);
+    if (room.gameStarted) {
+      socket.emit('join-result', {
+        success: false,
+        message: 'Game has already started.'
+      });
+      return;
+    }
+
+    if (Object.keys(room.players).length >= room.maxPlayers) {
+      socket.emit('join-result', {
+        success: false,
+        message: 'Game is full.'
+      });
+      return;
+    }
+
+    // Add player to room
+    const player = {
+      id: socket.id,
+      name: playerName || `Player ${Object.keys(room.players).length + 1}`,
+      joinedAt: new Date()
+    };
+
+    room.players[socket.id] = player;
+    socket.join(roomCode);
+    socket.join(`${roomCode}-players`);
+
+    socket.emit('join-result', {
+      success: true,
+      roomCode: roomCode,
+      playerData: player,
+      gameData: {
+        gameName: room.gameName,
+        hostName: room.hostName,
+        playerCount: Object.keys(room.players).length,
+        maxPlayers: room.maxPlayers
+      }
+    });
+
+    // Notify host and other players
+    socket.to(room.hostId).emit('player-joined', player);
+    socket.to(roomCode).emit('room-update', {
+      playerCount: Object.keys(room.players).length,
+      players: Object.values(room.players)
+    });
+
+    // Update public game list
+    io.emit('game-list-update', getPublicRoomsList());
+
+    console.log(`${player.name} joined game ${room.gameName} (${roomCode})`);
   });
 
   // Handle player actions
   socket.on('player-action', (action) => {
-    console.log('Player action received:', action);
-    
-    // Forward action to host
-    if (gameState.host) {
-      io.to(gameState.host).emit('player-action', {
+    // Find which room this player is in
+    const playerRoom = Object.values(gameRooms).find(room => 
+      room.players[socket.id]
+    );
+
+    if (playerRoom) {
+      const player = playerRoom.players[socket.id];
+      console.log(`Player action from ${player.name}:`, action);
+      
+      // Forward action to host
+      io.to(playerRoom.hostId).emit('player-action', {
         playerId: socket.id,
-        playerName: gameState.players[socket.id]?.name,
+        playerName: player.name,
+        roomCode: playerRoom.roomCode,
         action: action
       });
     }
   });
 
   // Handle host messages to players
-  socket.on('host-message', (message) => {
-    console.log('Host message:', message);
-    io.to('players').emit('host-message', message);
+  socket.on('host-message', (messageData) => {
+    const { roomCode, message } = messageData;
+    const room = gameRooms[roomCode];
+
+    if (room && room.hostId === socket.id) {
+      console.log(`Host message in ${roomCode}:`, message);
+      io.to(`${roomCode}-players`).emit('host-message', {
+        message: message,
+        timestamp: new Date()
+      });
+    }
+  });
+
+  // Start game (host only)
+  socket.on('start-game', (roomCode) => {
+    const room = gameRooms[roomCode];
+    if (room && room.hostId === socket.id) {
+      room.gameStarted = true;
+      io.to(roomCode).emit('game-started');
+      io.emit('game-list-update', getPublicRoomsList());
+      console.log(`Game started: ${room.gameName} (${roomCode})`);
+    }
+  });
+
+  // Get room info for reconnection
+  socket.on('get-room-info', (roomCode) => {
+    const room = gameRooms[roomCode];
+    if (room) {
+      socket.emit('room-info', {
+        gameName: room.gameName,
+        hostName: room.hostName,
+        playerCount: Object.keys(room.players).length,
+        maxPlayers: room.maxPlayers,
+        gameStarted: room.gameStarted,
+        players: Object.values(room.players)
+      });
+    }
   });
 
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     
-    // If host disconnects
-    if (gameState.host === socket.id) {
-      gameState.host = null;
-      io.to('players').emit('host-disconnected');
+    // Check if disconnected user was a host
+    const hostedRoom = Object.values(gameRooms).find(room => room.hostId === socket.id);
+    if (hostedRoom) {
+      console.log(`Host left game: ${hostedRoom.gameName} (${hostedRoom.roomCode})`);
+      io.to(hostedRoom.roomCode).emit('host-disconnected');
+      delete gameRooms[hostedRoom.roomCode];
+      io.emit('game-list-update', getPublicRoomsList());
+      return;
     }
-    
-    // If player disconnects
-    if (gameState.players[socket.id]) {
-      const playerName = gameState.players[socket.id].name;
-      delete gameState.players[socket.id];
+
+    // Check if disconnected user was a player
+    const playerRoom = Object.values(gameRooms).find(room => room.players[socket.id]);
+    if (playerRoom) {
+      const player = playerRoom.players[socket.id];
+      console.log(`${player.name} left game ${playerRoom.gameName} (${playerRoom.roomCode})`);
       
-      // Notify host
-      if (gameState.host) {
-        io.to(gameState.host).emit('player-left', { playerId: socket.id, playerName });
-        io.to(gameState.host).emit('game-state-update', { players: gameState.players });
-      }
+      delete playerRoom.players[socket.id];
+      
+      // Notify host and remaining players
+      io.to(playerRoom.hostId).emit('player-left', {
+        playerId: socket.id,
+        playerName: player.name
+      });
+      
+      io.to(playerRoom.roomCode).emit('room-update', {
+        playerCount: Object.keys(playerRoom.players).length,
+        players: Object.values(playerRoom.players)
+      });
+
+      // Update public game list
+      io.emit('game-list-update', getPublicRoomsList());
     }
   });
 });
@@ -107,6 +243,8 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`Open http://localhost:${PORT} to test`);
   }
 });
+
+
 
 // list of characters currently supported. Updated list when game starts
 const roles = {
