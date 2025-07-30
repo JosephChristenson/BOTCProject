@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const socketIo = require('socket.io');
 const path = require('path');
+const { permission } = require('process');
 
 const app = express();
 const server = http.createServer(app);
@@ -105,3 +106,70 @@ server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Open http://localhost:${PORT} to test`);
 });
+
+// list of characters currently supported. Updated list when game starts
+const roles = {
+
+  'washerwoman': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_washerwoman.png',
+    role: 'townsfolk',
+    displayName: 'Washer Woman'
+  },
+
+
+
+  
+  'poisoner': {
+    permissions: ['poisontarget'],
+    icon: '/icons/Icon_poisoner.png',
+    role: 'minion',
+    displayName: 'poisoner'
+  },
+  'spy': {
+    permissions: ['grimlook', 'falsetown', 'falseoutsider'],
+    icon: '/icons/Icon_spy.png',
+    role: 'minion',
+    displayName: 'spy'
+  },
+  'baron': {
+    permissions: [],
+    icon: '/icons/Icon_baron.png',
+    role: 'minion',
+    displayName: 'baron'
+  },
+  'scarletwoman': {
+    permissions: [],
+    icon: '/icons/Icon_scarletwoman.png',
+    role: 'minion',
+    displayName: 'scarletwoman'
+  },
+  'imp': {
+    permissions: ['demonkill', 'starpass'],
+    icon: '/icons/Icon_imp.png',
+    role: 'demon',
+    displayName: 'imp'
+  }
+}
+
+// basic alive, dead and special section.
+const stateRoles = {
+  'alive': { // player is alive. Can vote, nominate and publicly declare statements.
+    name: 'Alive',
+    icon: 'heart-pulse',
+    color: '#00FF00',
+    permissions: ['move', 'interact', 'communicate', 'use_items']
+  },
+  'dead': {
+    name: 'Dead', 
+    icon: 'skull',
+    color: '#808080',
+    permissions: ['spectate', 'ghost_communicate']
+  },
+  'unconscious': {
+    name: 'Unconscious',
+    icon: 'sleep',
+    color: '#FFAA00', 
+    permissions: ['await_revival']
+  }
+}
