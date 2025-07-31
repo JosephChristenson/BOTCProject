@@ -406,16 +406,40 @@
         socket.on('connect', () => {
             const roomCode = getRoomCodeFromURL();
             if (roomCode) {
-                // If coming from lobby with room code, get room info
+                updateStatus('Connecting to your game room...', 'info');
+                // Try to reconnect as host first
+                socket.emit('reconnect-as-host', roomCode);
+                // Also get room info as fallback
                 socket.emit('get-room-info', roomCode);
             } else {
                 // Redirect to lobby if no room code
-                window.location.href = '/lobby.html';
+                updateStatus('No room code found. Redirecting to lobby...', 'error');
+                setTimeout(() => {
+                    window.location.href = '/lobby.html';
+                }, 2000);
             }
         });
 
         socket.on('disconnect', () => {
             updateStatus('Disconnected from server', 'error');
+        });
+
+        socket.on('host-reconnected', (roomInfo) => {
+            initializeHostPanel({
+                roomCode: roomInfo.roomCode,
+                gameName: roomInfo.gameName,
+                hostName: roomInfo.hostName
+            });
+            updatePlayersDisplay(roomInfo.players || {});
+            
+            if (roomInfo.gameStarted) {
+                gameStarted = true;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                document.getElementById('gameStatus').textContent = 'Game in progress';
+            }
+            
+            addToLog('Reconnected to your game room', 'system');
         });
 
         socket.on('room-info', (roomInfo) => {
@@ -433,6 +457,13 @@
                 document.getElementById('pauseBtn').disabled = false;
                 document.getElementById('gameStatus').textContent = 'Game in progress';
             }
+        });
+
+        socket.on('room-not-found', () => {
+            updateStatus('Game room not found. Redirecting to lobby...', 'error');
+            setTimeout(() => {
+                window.location.href = '/lobby.html';
+            }, 2000);
         });
 
         socket.on('player-joined', (player) => {

@@ -353,9 +353,22 @@
         socket.on('connect', () => {
             const roomCode = getRoomCodeFromURL();
             if (roomCode) {
-                // Auto-join with a default name, or redirect to lobby for name input
-                const playerName = sessionStorage.getItem('playerName') || prompt('Enter your name:') || 'Anonymous Player';
-                sessionStorage.setItem('playerName', playerName);
+                updateStatus('Connecting to game...', 'info');
+                
+                // Check if we have a stored player name, otherwise prompt for it
+                let playerName = sessionStorage.getItem('playerName');
+                if (!playerName) {
+                    // For direct links, we need to get the player name
+                    playerName = prompt('Enter your name to join the game:');
+                    if (!playerName) {
+                        updateStatus('Name is required to join. Redirecting to lobby...', 'error');
+                        setTimeout(() => {
+                            window.location.href = `/lobby.html`;
+                        }, 2000);
+                        return;
+                    }
+                    sessionStorage.setItem('playerName', playerName);
+                }
                 
                 socket.emit('join-game', {
                     roomCode: roomCode,
@@ -363,7 +376,10 @@
                 });
             } else {
                 // Redirect to lobby if no room code
-                window.location.href = '/lobby.html';
+                updateStatus('No room code found. Redirecting to lobby...', 'error');
+                setTimeout(() => {
+                    window.location.href = '/lobby.html';
+                }, 2000);
             }
         });
 
@@ -376,7 +392,13 @@
                 initializePlayerPanel(data);
             } else {
                 updateStatus(`Failed to join: ${data.message}`, 'error');
+                
+                // Clear stored player name if join failed
+                sessionStorage.removeItem('playerName');
+                
+                // Show error for a few seconds then redirect
                 setTimeout(() => {
+                    updateStatus('Redirecting to lobby...', 'info');
                     window.location.href = '/lobby.html';
                 }, 3000);
             }

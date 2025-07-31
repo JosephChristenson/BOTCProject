@@ -73,9 +73,13 @@ io.on('connection', (socket) => {
   // Join an existing game
   socket.on('join-game', (joinData) => {
     const { roomCode, playerName } = joinData;
+    
+    console.log(`Join attempt: ${playerName} trying to join ${roomCode}`);
+    
     const room = gameRooms[roomCode];
 
     if (!room) {
+      console.log(`Join failed: Room ${roomCode} not found`);
       socket.emit('join-result', {
         success: false,
         message: 'Game not found. Please check the room code.'
@@ -84,6 +88,7 @@ io.on('connection', (socket) => {
     }
 
     if (room.gameStarted) {
+      console.log(`Join failed: Game ${roomCode} already started`);
       socket.emit('join-result', {
         success: false,
         message: 'Game has already started.'
@@ -92,6 +97,7 @@ io.on('connection', (socket) => {
     }
 
     if (Object.keys(room.players).length >= room.maxPlayers) {
+      console.log(`Join failed: Game ${roomCode} is full`);
       socket.emit('join-result', {
         success: false,
         message: 'Game is full.'
@@ -109,6 +115,8 @@ io.on('connection', (socket) => {
     room.players[socket.id] = player;
     socket.join(roomCode);
     socket.join(`${roomCode}-players`);
+
+    console.log(`Join successful: ${player.name} joined ${room.gameName} (${roomCode})`);
 
     socket.emit('join-result', {
       success: true,
@@ -131,8 +139,6 @@ io.on('connection', (socket) => {
 
     // Update public game list
     io.emit('game-list-update', getPublicRoomsList());
-
-    console.log(`${player.name} joined game ${room.gameName} (${roomCode})`);
   });
 
   // Handle player actions
@@ -185,7 +191,42 @@ io.on('connection', (socket) => {
   socket.on('get-room-info', (roomCode) => {
     const room = gameRooms[roomCode];
     if (room) {
-      socket.emit('room-info', {
+      // Check if this socket is the host
+      if (room.hostId === socket.id) {
+        socket.emit('host-room-info', {
+          roomCode: roomCode,
+          gameName: room.gameName,
+          hostName: room.hostName,
+          playerCount: Object.keys(room.players).length,
+          maxPlayers: room.maxPlayers,
+          gameStarted: room.gameStarted,
+          players: Object.values(room.players)
+        });
+      } else {
+        socket.emit('room-info', {
+          gameName: room.gameName,
+          hostName: room.hostName,
+          playerCount: Object.keys(room.players).length,
+          maxPlayers: room.maxPlayers,
+          gameStarted: room.gameStarted,
+          players: Object.values(room.players)
+        });
+      }
+    } else {
+      socket.emit('room-not-found');
+    }
+  });
+
+  // Handle host reconnection to existing room
+  socket.on('reconnect-as-host', (roomCode) => {
+    const room = gameRooms[roomCode];
+    if (room && room.hostId === socket.id) {
+      // Host is reconnecting to their own room
+      socket.join(roomCode);
+      socket.join(`${roomCode}-host`);
+      
+      socket.emit('host-reconnected', {
+        roomCode: roomCode,
         gameName: room.gameName,
         hostName: room.hostName,
         playerCount: Object.keys(room.players).length,
@@ -204,9 +245,16 @@ io.on('connection', (socket) => {
     const hostedRoom = Object.values(gameRooms).find(room => room.hostId === socket.id);
     if (hostedRoom) {
       console.log(`Host left game: ${hostedRoom.gameName} (${hostedRoom.roomCode})`);
-      io.to(hostedRoom.roomCode).emit('host-disconnected');
-      delete gameRooms[hostedRoom.roomCode];
-      io.emit('game-list-update', getPublicRoomsList());
+      // Give host some time to reconnect before destroying room
+      setTimeout(() => {
+        // Check if room still exists and host hasn't reconnected
+        if (gameRooms[hostedRoom.roomCode] && gameRooms[hostedRoom.roomCode].hostId === socket.id) {
+          io.to(hostedRoom.roomCode).emit('host-disconnected');
+          delete gameRooms[hostedRoom.roomCode];
+          io.emit('game-list-update', getPublicRoomsList());
+          console.log(`Room ${hostedRoom.roomCode} deleted due to host disconnect`);
+        }
+      }, 10000); // 10 second grace period for host to reconnect
       return;
     }
 
@@ -243,8 +291,6 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`Open http://localhost:${PORT} to test`);
   }
 });
-
-
 
 // list of characters currently supported. Updated list when game starts
 const roles = {

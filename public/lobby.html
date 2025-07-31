@@ -329,8 +329,16 @@
         socket.on('join-result', (data) => {
             if (data.success) {
                 updateStatus(`Joined ${data.gameData.gameName}!`, 'success');
-                // Redirect to player interface with room code
-                window.location.href = `/player.html?room=${data.roomCode}`;
+                
+                // Store player name for the redirect
+                const playerName = document.getElementById('playerName').value.trim();
+                sessionStorage.setItem('playerName', playerName);
+                
+                // Small delay to show success message
+                setTimeout(() => {
+                    // Redirect to player interface with room code
+                    window.location.href = `/player.html?room=${data.roomCode}`;
+                }, 500);
             } else {
                 updateStatus('Failed to join game: ' + data.message, 'error');
             }
