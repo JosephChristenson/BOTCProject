@@ -11,14 +11,14 @@
         <div id="status" class="status info">Loading...</div>
         
         <div id="game-info" class="game-header" style="display: none;">
-            <h1>🎯 <span id="gameName"></span></h1>
+            <h1>Game name: <span id="gameName"></span></h1>
             <p>Host: <span id="hostName"></span></p>
             <div class="room-code" id="roomCode"></div>
             <p>Share this code with players to join your game</p>
         </div>
 
         <div id="share-section" class="share-section" style="display: none;">
-            <h4>📤 Share Game</h4>
+            <h4>Share Game</h4>
             <p><strong>Room Code:</strong> <span id="shareRoomCode" class="room-code" style="font-size: 18px;"></span></p>
             <p><strong>Direct Link:</strong></p>
             <div class="share-link" id="shareLink"></div>
@@ -26,7 +26,6 @@
         </div>
 
         <div id="host-panel" style="display: none;">
-            <!-- Players Section -->
             <div class="players-section">
                 <h3>👥 Connected Players (<span id="playerCount">0</span>)</h3>
                 <div id="players-container" class="players-grid">
@@ -37,7 +36,6 @@
                 </div>
             </div>
 
-            <!-- Controls Section -->
             <div class="controls-section">
                 <div class="control-panel">
                     <h3>🎮 Game Controls</h3>
@@ -61,8 +59,7 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Activity Log -->
+            
             <div style="margin-top: 20px;">
                 <h3>📋 Activity Log</h3>
                 <div id="actionLog" class="log"></div>
