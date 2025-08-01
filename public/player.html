@@ -4,8 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Player</title>
-    <link rel="stylesheet" href="styles/main.css">
 </head>
+<style>
+body {
+	font-family: var(--font-family-primary);
+	max-width: 700px;
+	margin: 0 auto;
+	padding: 20px;
+	background: linear-gradient(135deg, var(--color-background-light) 0%, var(--color-background-dark) 100%);
+	min-height: 100vh;
+}
+.container {
+	background: white;
+	padding: 25px;
+	border-radius: 15px;
+	box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+.status {
+	padding: 12px;
+	margin: 15px 0;
+	border-radius: 8px;
+	font-weight: bold;
+}
+.status.success { background: #d4edda; color: var(--color-success); }
+.status.error { background: #f8d7da; color: var(--color-error) }
+.status.info { background: #d1ecf1; color: var(--color-info) }
+.game-header {
+	background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+	color: white;
+	padding: 20px;
+	border-radius: 10px;
+	margin-bottom: 20px;
+	text-align: center;
+}
+.room-info {
+	background: #e7f3ff;
+	padding: 15px;
+	border-radius: 8px;
+	margin: 15px 0;
+	border-left: 4px solid #007bff;
+}
+.player-info {
+	background: #f0f8ff;
+	padding: 15px;
+	border-radius: 8px;
+	margin: 15px 0;
+}
+.game-area {
+	background: #f8f9fa;
+	padding: 25px;
+	border-radius: 10px;
+	margin: 20px 0;
+	min-height: 200px;
+}
+.actions {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 15px;
+	margin: 20px 0;
+}
+.action-btn {
+	background: #28a745;
+	color: white;
+	border: none;
+	padding: 15px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: bold;
+	transition: all 0.2s;
+	text-align: center;
+}
+.action-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.action-btn.blue { background: #007bff; }
+.action-btn.blue:hover { background: #0056b3; }
+.action-btn.orange { background: #fd7e14; }
+.action-btn.orange:hover { background: #e8650f; }
+.action-btn.purple { background: #6f42c1; }
+.action-btn.purple:hover { background: #5a2d91; }
+.action-btn:active {
+	transform: translateY(0);
+	box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.custom-action {
+	display: flex;
+	gap: 10px;
+	margin-top: 20px;
+	padding-top: 15px;
+	border-top: 1px solid #dee2e6;
+}
+.custom-action input {
+	flex: 1;
+	padding: 10px;
+	border: 1px solid #ddd;
+	border-radius: 5px;
+	font-size: 14px;
+}
+.custom-action button {
+	background: #6c757d;
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 5px;
+	cursor: pointer;
+}
+.custom-action button:hover { background: #545b62; }
+.messages-section {
+	background: #fff3cd;
+	border: 1px solid #ffeaa7;
+	border-radius: 8px;
+	padding: 20px;
+	margin: 20px 0;
+	max-height: 200px;
+	overflow-y: auto;
+}
+.message-item {
+	background: white;
+	padding: 10px;
+	margin: 8px 0;
+	border-radius: 5px;
+	border-left: 3px solid #ffc107;
+}
+.message-timestamp {
+	font-size: 11px;
+	color: #666;
+	margin-bottom: 5px;
+}
+.waiting-screen {
+	text-align: center;
+	padding: 40px 20px;
+	color: #666;
+}
+.waiting-screen h2 {
+	color: #333;
+	margin-bottom: 10px;
+}
+.game-status {
+	background: #e9ecef;
+	padding: 10px;
+	border-radius: 5px;
+	text-align: center;
+	margin: 15px 0;
+	font-weight: bold;
+}
+.game-status.active {
+	background: #d4edda;
+	color: #155724;
+}
+.player-list {
+	background: #f8f9fa;
+	padding: 15px;
+	border-radius: 8px;
+	margin: 15px 0;
+}
+.player-list h4 {
+	margin: 0 0 10px 0;
+	color: #333;
+}
+.player-list p {
+	margin: 5px 0;
+	color: #666;
+	font-size: 14px;
+}
+@media (max-width: 600px) {
+	.actions {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.custom-action {
+		flex-direction: column;
+	}
+}
+</style>
 <body>
     <div class="container">
         <div id="status" class="status info">Loading...</div>
@@ -39,23 +211,14 @@
                 <p>Click buttons below to send actions to the host:</p>
                 
                 <div class="actions">
-                    <button class="action-btn" onclick="sendAction('click', 'red')">
-                        🔴 Click Red
+                    <button class="action-btn" onclick="sendAction('click', 'Nominate')">
+                        Nominate
                     </button>
-                    <button class="action-btn blue" onclick="sendAction('click', 'blue')">
-                        🔵 Click Blue
+                    <button class="action-btn" onclick="sendAction('click', 'Vote')">
+                        Vote
                     </button>
-                    <button class="action-btn orange" onclick="sendAction('move', 'left')">
-                        ⬅️ Move Left
-                    </button>
-                    <button class="action-btn orange" onclick="sendAction('move', 'right')">
-                        ➡️ Move Right
-                    </button>
-                    <button class="action-btn purple" onclick="sendAction('jump', null)">
-                        ⬆️ Jump
-                    </button>
-                    <button class="action-btn purple" onclick="sendAction('spin', null)">
-                        🌀 Spin
+                    <button class="action-btn" onclick="sendAction('click', 'Declare Slayer')">
+                        Declare Slayer
                     </button>
                 </div>
                 
