@@ -303,10 +303,102 @@ const roles = {
     role: 'townsfolk',
     displayName: 'Washer Woman'
   },
-
-
-
-  
+  'librarian': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_librarian.png',
+    role: 'townsfolk',
+    displayName: 'Librarian'
+  },
+  'investigator': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_investigator.png',
+    role: 'townsfolk',
+    displayName: 'Investigator'
+  },
+  'chef': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_chef.png',
+    role: 'townsfolk',
+    displayName: 'Chef'
+  },
+  'empath': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_empath.png',
+    role: 'townsfolk',
+    displayName: 'Empath'
+  },
+  'fortune teller': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_fortuneteller.png',
+    role: 'townsfolk',
+    displayName: 'Fortune Teller'
+  },
+  'Undertaker': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_undertaker.png',
+    role: 'townsfolk',
+    displayName: 'Undertaker'
+  },
+  'monk': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_monk.png',
+    role: 'townsfolk',
+    displayName: 'Monk'
+  },
+  'ravenkeeper': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_ravenkeeper.png',
+    role: 'townsfolk',
+    displayName: 'Ravenkeeper'
+  },
+  'virgin': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_virgin.png',
+    role: 'townsfolk',
+    displayName: 'Virgin'
+  },
+  'slayer': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_slayer.png',
+    role: 'townsfolk',
+    displayName: 'Slayer'
+  },
+  'soldier': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_soldier.png',
+    role: 'townsfolk',
+    displayName: 'Soldier'
+  },
+  'mayor': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_mayor.png',
+    role: 'townsfolk',
+    displayName: 'Mayor'
+  },  
+  'butler': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_butler.png',
+    role: 'townsfolk',
+    displayName: 'Butler'
+  },
+  'saint': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_saint.png',
+    role: 'townsfolk',
+    displayName: 'Saint'
+  },
+  'recluse': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_recluse.png',
+    role: 'townsfolk',
+    displayName: 'Recluse'
+  },
+  'drunk': {
+    permissions: [], // no permissions needed.
+    icon: '/icons/Icon_drunk.png',
+    role: 'townsfolk',
+    displayName: 'Drunk'
+  },
   'poisoner': {
     permissions: ['poisontarget'],
     icon: '/icons/Icon_poisoner.png',
