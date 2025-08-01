@@ -148,6 +148,7 @@ io.on('connection', (socket) => {
       room.players[socket.id]
     );
 
+    console.log(`Player action from ${player.name}:`, action)
     if (playerRoom) {
       const player = playerRoom.players[socket.id];
       console.log(`Player action from ${player.name}:`, action);
@@ -241,25 +242,21 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     
-    /*
     // Check if disconnected user was a host
     const hostedRoom = Object.values(gameRooms).find(room => room.hostId === socket.id);
     if (hostedRoom) {
       console.log(`Host left game: ${hostedRoom.gameName} (${hostedRoom.roomCode})`);
-      // Give host some time to reconnect before destroying room
       setTimeout(() => {
-        // Check if room still exists and host hasn't reconnected
-        if (gameRooms[hostedRoom.roomCode] && gameRooms[hostedRoom.roomCode].hostId === socket.id) {
+        if (gameRooms[hostedRoom.roomCode] && gameRooms[hostedRoom.roomCode].hostId == socket.id) {
           io.to(hostedRoom.roomCode).emit('host-disconnected');
           delete gameRooms[hostedRoom.roomCode];
           io.emit('game-list-update', getPublicRoomsList());
           console.log(`Room ${hostedRoom.roomCode} deleted due to host disconnect`);
         }
-      }, 100000); // 10 second grace period for host to reconnect
+      }, 100000);
       return;
     }
-      */
-
+    
     // Check if disconnected user was a player
     const playerRoom = Object.values(gameRooms).find(room => room.players[socket.id]);
     if (playerRoom) {
