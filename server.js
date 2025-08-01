@@ -237,11 +237,11 @@ io.on('connection', (socket) => {
     }
   });
 
-  /*
   // Handle disconnection
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
     
+    /*
     // Check if disconnected user was a host
     const hostedRoom = Object.values(gameRooms).find(room => room.hostId === socket.id);
     if (hostedRoom) {
@@ -258,6 +258,7 @@ io.on('connection', (socket) => {
       }, 100000); // 10 second grace period for host to reconnect
       return;
     }
+      */
 
     // Check if disconnected user was a player
     const playerRoom = Object.values(gameRooms).find(room => room.players[socket.id]);
@@ -282,7 +283,6 @@ io.on('connection', (socket) => {
       io.emit('game-list-update', getPublicRoomsList());
     }
   });
-  */
 });
 
 const PORT = process.env.PORT || 3000;
